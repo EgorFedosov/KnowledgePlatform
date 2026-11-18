@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Профиль{% endblock %}
+{% block content %}
+<div class="profile">
+  <div class="card side">
+    <span class="avatar big">{{ g.user.name[:2]|upper }}</span>
+    <h2>{{ g.user.name }}</h2>
+    <span class="badge blue">{{ g.user.role }}</span>
+    <div class="score">{{ g.user.rating }}</div>
+    <div class="muted">рейтинг</div>
+    <p><span class="badge green">{{ g.user.reputation_status }}</span></p>
+  </div>
+  <form class="card" method="post">
+    <h2 style="margin-top: 0">Данные профиля</h2>
+    <label>Имя</label>
+    <input type="text" name="name" value="{{ g.user.name }}" required>
+    <label>Новый пароль</label>
+    <input type="password" name="password" placeholder="Оставьте пустым, чтобы не менять">
+    <label>Повтор пароля</label>
+    <input type="password" name="password2" placeholder="Повторите пароль">
+    <button class="btn" style="margin-top: 16px">Сохранить</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Вход' if tab == 'login' else 'Регистрация' }}{% endblock %}
+{% block messages %}{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <div class="tabs">
+    <a href="{{ url_for('login') }}" class="{{ 'on' if tab == 'login' }}">Вход</a>
+    <a href="{{ url_for('register') }}" class="{{ 'on' if tab == 'register' }}">Регистрация</a>
+  </div>
+  <form method="post">
+    <label>Имя пользователя</label>
+    <input type="text" name="name" value="{{ request.form.name }}" placeholder="Введите имя" required>
+    <label>Пароль</label>
+    <input type="password" name="password" placeholder="{{ 'Пароль' if tab == 'login' else 'Придумайте пароль' }}" required>
+    {% if tab == 'register' %}
+    <label>Повтор пароля</label>
+    <input type="password" name="password2" placeholder="Повторите пароль" required>
+    {% endif %}
+    <div style="margin-top: 14px">{% include "messages.html" %}</div>
+    <button class="btn wide" style="margin-top: 0">{{ 'Войти' if tab == 'login' else 'Зарегистрироваться' }}</button>
+  </form>
+</div>
+{% endblock %}

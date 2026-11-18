@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "macros.html" import question_card %}
+{% block title %}Поиск{% endblock %}
+{% block content %}
+<form action="{{ url_for('search') }}">
+  <div class="row">
+    <input class="grow" type="search" name="q" value="{{ keywords }}" placeholder="Поиск по ключевым словам">
+    <button class="btn">Найти</button>
+  </div>
+  <div class="tagpick" style="margin: 8px 0 14px">
+    <span class="muted">Теги:</span>
+    {% for tag in all_tags %}
+    <label style="display: inline"><input type="checkbox" name="tag" value="{{ tag.name }}" {{ 'checked' if tag.name in tags }}
+      onchange="this.form.submit()"><span class="chip">{{ tag.name }}</span></label>
+    {% endfor %}
+  </div>
+</form>
+<p class="muted">Найдено: {{ questions|length }}</p>
+{% for q in questions %}{{ question_card(q) }}{% endfor %}
+{% if g.user.role != 'Администратор' %}
+<div class="card row">
+  <span class="grow">Не нашли решение?</span>
+  <a class="btn ghost" href="{{ url_for('new_question') }}">Задать свой вопрос</a>
+</div>
+{% endif %}
+{% endblock %}

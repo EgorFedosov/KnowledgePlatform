@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "macros.html" import question_card %}
+{% block title %}Лента{% endblock %}
+{% block content %}
+<form class="row" action="{{ url_for('search') }}">
+  <input class="grow" type="search" name="q" placeholder="Поиск по ключевым словам">
+  <button class="btn">Найти</button>
+</form>
+<h1 style="margin-top: 22px">Лента публикаций</h1>
+{% for q in questions %}{{ question_card(q) }}{% else %}<p class="muted">Публикаций пока нет</p>{% endfor %}
+{% if pages > 1 %}
+<div class="pages">
+  {% for n in range(1, pages + 1) %}<a href="{{ url_for('feed', page=n) }}" class="{{ 'on' if n == page }}">{{ n }}</a>{% endfor %}
+</div>
+{% endif %}
+{% endblock %}

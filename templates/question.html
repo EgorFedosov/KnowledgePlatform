@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "macros.html" import status_badge, tags %}
+{% block title %}{{ question.title }}{% endblock %}
+{% block content %}
+{% set specialist = g.user.role != 'Администратор' %}
+{% set is_author = question.author.id == g.user.id %}
+<div class="row">
+  <h1 class="grow">{{ question.title }}</h1>
+  {% if specialist %}
+    {% if subscribed %}<span class="badge blue">Вы подписаны</span>
+    {% else %}<form method="post" action="{{ url_for('subscribe', id=question.id) }}"><button class="btn ghost">Подписаться</button></form>{% endif %}
+  {% endif %}
+</div>
+<div class="muted">{{ question.author.name }} · {{ question.created_at.strftime('%d.%m.%Y') }} · {{ status_badge(question.status) }}</div>
+{{ tags(question.tags) }}
+<div class="card" style="margin-top: 14px">{{ question.description }}</div>
+
+<h2>Ответы ({{ question.comments|length }})</h2>
+{% for c in question.comments %}
+<div class="card">
+  <div class="row">
+    <span class="avatar">{{ c.author.name[:2]|upper }}</span>
+    <b>{{ c.author.name }}</b><span class="muted grow">· {{ c.created_at.strftime('%d.%m') }}</span>
+    {% if c.is_best_answer %}<span class="badge green">Лучший ответ</span>{% endif %}
+    {% if c.review_status == 'Подтверждён' %}<span class="badge blue">Проверен</span>
+    {% elif c.review_status == 'Отклонён' %}<span class="badge red">Отклонён</span>
+    {% else %}<span class="badge yellow">Ожидает проверки</span>{% endif %}
+  </div>
+  <p>{{ c.text }}</p>
+  {% if c.review_note %}<div class="note">Замечание эксперта: {{ c.review_note }}</div>{% endif %}
+  <div class="row" style="margin-top: 10px">
+    <form method="post" action="{{ url_for('rate', id=c.id) }}"><button class="btn ghost small" {{ 'disabled' if not specialist }}>Полезно · {{ c.useful_count }}</button></form>
+    {% if is_author and question.status == 'Открыт' and c.author.id != g.user.id %}
+    <form method="post" action="{{ url_for('best', id=c.id) }}"><button class="btn ghost small">Выбрать лучшим</button></form>
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+
+{% if question.status == 'Закрыт' %}
+<div class="card muted">Тема закрыта экспертом, новые ответы не принимаются</div>
+{% elif specialist %}
+<form class="card" method="post" action="{{ url_for('answer', id=question.id) }}">
+  <textarea name="text" placeholder="Ваш ответ" required></textarea>
+  <button class="btn" style="margin-top: 12px">Отправить ответ</button>
+</form>
+{% endif %}
+{% endblock %}

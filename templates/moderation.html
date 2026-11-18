@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "macros.html" import expert_tabs, status_badge %}
+{% block title %}Модерация тем{% endblock %}
+{% block content %}
+{{ expert_tabs('moderation') }}
+<form method="post">
+  <table>
+    <tr><th>Вопрос</th><th>Теги</th><th>Состояние</th></tr>
+    {% for q in items %}
+    {% set names = q.tags|map(attribute='name')|join(', ') %}
+    <tr class="pick" data-tags="{{ names }}"
+        onclick="this.querySelector('input').checked = true; document.querySelector('[name=tags]').value = this.dataset.tags">
+      <td><input type="radio" name="question_id" value="{{ q.id }}">
+        <a href="{{ url_for('question', id=q.id) }}">{{ q.title }}</a></td>
+      <td>{{ names }}</td>
+      <td>{{ status_badge(q.status) }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="3" class="muted">Активных тем нет</td></tr>
+    {% endfor %}
+  </table>
+  <div class="row">
+    <input class="grow" type="text" name="tags" placeholder="Теги через запятую">
+    <button class="btn ghost" name="action" value="tags">Изменить теги</button>
+    <button class="btn danger" name="action" value="close">Закрыть тему</button>
+  </div>
+</form>
+{% endblock %}

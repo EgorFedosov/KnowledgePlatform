@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}{% endblock %} — Платформа знаний</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+{% set ep = request.endpoint %}
+<header class="top">
+  <a class="brand" href="{{ url_for('feed') }}">Платформа знаний</a>
+  {% if g.user %}
+  <nav class="nav">
+    {% if g.user.role == 'Эксперт' %}<a href="{{ url_for('review') }}" class="{{ 'on' if ep in ('review', 'moderation') }}">Проверка</a>{% endif %}
+    {% if g.user.role == 'Администратор' %}<a href="{{ url_for('admin') }}" class="{{ 'on' if ep == 'admin' }}">Администрирование</a>{% endif %}
+    <a href="{{ url_for('feed') }}" class="{{ 'on' if ep in ('feed', 'search') }}">Лента</a>
+    {% if g.user.role != 'Администратор' %}<a href="{{ url_for('new_question') }}" class="{{ 'on' if ep == 'new_question' }}">Задать вопрос</a>{% endif %}
+    <a href="{{ url_for('notifications') }}" class="{{ 'on' if ep == 'notifications' }}">Уведомления{% if notification_count %} <span class="count">{{ notification_count }}</span>{% endif %}</a>
+    <a href="{{ url_for('profile') }}" class="{{ 'on' if ep == 'profile' }}">Профиль</a>
+    <a href="{{ url_for('logout') }}">Выход</a>
+  </nav>
+  {% endif %}
+</header>
+<main>
+  {% block messages %}{% include "messages.html" %}{% endblock %}
+  {% block content %}{% endblock %}
+</main>
+<form class="foot" method="post" action="{{ url_for('quit') }}">
+  <button class="link">Закрыть приложение</button>
+</form>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{% macro status_badge(status) %}
+{% if status == 'Решён' %}<span class="badge green">Решён</span>
+{% elif status == 'Закрыт' %}<span class="badge gray">Закрыт</span>
+{% else %}<span class="badge gray">Открыт</span>{% endif %}
+{% endmacro %}
+
+{% macro tags(items) %}{% for tag in items %}<span class="chip">{{ tag.name }}</span>{% endfor %}{% endmacro %}
+
+{% macro question_card(q) %}
+<a class="card post" href="{{ url_for('question', id=q.id) }}">
+  <div class="grow">
+    <h3>{{ q.title }}</h3>
+    <div class="muted">{{ q.author.name }} · {{ q.created_at.strftime('%d.%m') }}</div>
+    {{ tags(q.tags) }}
+  </div>
+  {% if q.status != 'Открыт' %}{{ status_badge(q.status) }}{% endif %}
+  <div class="answers"><b>{{ q.comments|length }}</b>ответов</div>
+</a>
+{% endmacro %}
+
+{% macro expert_tabs(active) %}
+<h1>Панель эксперта</h1>
+<div class="tabs">
+  <a href="{{ url_for('review') }}" class="{{ 'on' if active == 'review' }}">Проверка ответов</a>
+  <a href="{{ url_for('moderation') }}" class="{{ 'on' if active == 'moderation' }}">Модерация тем</a>
+</div>
+{% endmacro %}
