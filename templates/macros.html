@@ -10,7 +10,7 @@
 <a class="card post" href="{{ url_for('question', id=q.id) }}">
   <div class="grow">
     <h3>{{ q.title }}</h3>
-    <div class="muted">{{ q.author.name }} · {{ q.created_at.strftime('%d.%m') }}</div>
+    <div class="muted">{{ q.author.name }} · {{ q.createdAt.strftime('%d.%m') }}</div>
     {{ tags(q.tags) }}
   </div>
   {% if q.status != 'Открыт' %}{{ status_badge(q.status) }}{% endif %}

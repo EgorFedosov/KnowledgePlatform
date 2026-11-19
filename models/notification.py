@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
 
+from models.profile import User
+
 
 class NotificationType(StrEnum):
     NEW_QUESTION = "Новый вопрос"
@@ -12,8 +14,8 @@ class NotificationType(StrEnum):
 @dataclass
 class Notification:
     id: int | None
-    type: NotificationType
+    type: str
     text: str
-    recipient_id: int
-    question_id: int | None
     date: datetime = field(default_factory=datetime.now)
+    recipient: User | None = None
+    questionId: int | None = None

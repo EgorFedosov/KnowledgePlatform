@@ -12,10 +12,10 @@
     <tr><th>Имя</th><th>Роль</th><th>Рейтинг</th><th>Состояние</th></tr>
     {% for u in users %}
     <tr class="pick" onclick="this.querySelector('input').checked = true">
-      <td><input type="radio" name="user_id" value="{{ u.id }}" {{ 'checked' if chosen == u.id|string }}>{{ u.name }}</td>
-      <td>{{ u.role }}</td>
+      <td><input type="radio" name="userId" value="{{ u.id }}" {{ 'checked' if chosen == u.id|string }}>{{ u.name }}</td>
+      <td>{{ roleName(u) }}</td>
       <td>{{ u.rating }}</td>
-      <td>{% if u.is_blocked %}<span class="badge red">Заблокирован</span>{% else %}<span class="badge green">Активен</span>{% endif %}</td>
+      <td>{% if u.isBlocked %}<span class="badge red">Заблокирован</span>{% else %}<span class="badge green">Активен</span>{% endif %}</td>
     </tr>
     {% else %}
     <tr><td colspan="4" class="muted">Никого не найдено</td></tr>

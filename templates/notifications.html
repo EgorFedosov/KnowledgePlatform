@@ -3,7 +3,7 @@
 {% block content %}
 <h1>Уведомления</h1>
 {% for n in notifications %}
-<a class="card notice" href="{{ url_for('question', id=n.question_id) if n.question_id else '#' }}">
+<a class="card notice" href="{{ url_for('question', id=n.questionId) if n.questionId else '#' }}">
   <span class="badge blue">{{ n.type }}</span>
   <span class="grow">{{ n.text }}</span>
   <span class="muted">{{ n.date.strftime('%d.%m %H:%M') }}</span>

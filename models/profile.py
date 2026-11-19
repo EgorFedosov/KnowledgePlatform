@@ -1,12 +1,5 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass
-from enum import StrEnum
-
-
-class Role(StrEnum):
-    SPECIALIST = "Специалист"
-    EXPERT = "Эксперт"
-    ADMIN = "Администратор"
 
 
 @dataclass
@@ -15,28 +8,32 @@ class User(ABC):
     name: str
     password: str
     rating: int = 0
-    reputation_status: str = "Новичок"
-    is_blocked: bool = False
+    reputationStatus: str = "Новичок"
+    isBlocked: bool = False
 
-    @property
-    @abstractmethod
-    def role(self) -> Role: ...
+    def __post_init__(self):
+        if type(self) is User:
+            raise TypeError("User — абстрактный класс")
 
 
 class Specialist(User):
-    role = Role.SPECIALIST
+    pass
 
 
 class Expert(Specialist):
-    role = Role.EXPERT
+    pass
 
 
 class Administrator(User):
-    role = Role.ADMIN
+    pass
 
 
-USER_CLASSES = {Role.SPECIALIST: Specialist, Role.EXPERT: Expert, Role.ADMIN: Administrator}
+ROLES = {Specialist: "Специалист", Expert: "Эксперт", Administrator: "Администратор"}
 
 
-def create_user(role, **fields) -> User:
-    return USER_CLASSES[Role(role)](**fields)
+def roleName(user: User) -> str:
+    return ROLES[type(user)]
+
+
+def userOfRole(role: str, **fields) -> User:
+    return next(cls for cls, name in ROLES.items() if name == role)(**fields)

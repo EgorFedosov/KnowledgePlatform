@@ -8,18 +8,18 @@
     <tr><th>Вопрос</th><th>Ответ</th><th>Автор</th><th>Статус</th></tr>
     {% for c, title in items %}
     <tr class="pick" onclick="this.querySelector('input').checked = true">
-      <td><input type="radio" name="comment_id" value="{{ c.id }}">
-        <a href="{{ url_for('question', id=c.question_id) }}">{{ title }}</a></td>
+      <td><input type="radio" name="commentId" value="{{ c.id }}">
+        <a href="{{ url_for('question', id=c.questionId) }}">{{ title }}</a></td>
       <td>{{ c.text }}</td>
       <td>{{ c.author.name }}</td>
-      <td><span class="badge yellow">{{ c.review_status }}</span></td>
+      <td><span class="badge yellow">{{ c.reviewStatus }}</span></td>
     </tr>
     {% else %}
     <tr><td colspan="4" class="muted">Все ответы проверены</td></tr>
     {% endfor %}
   </table>
   <div class="row">
-    <input class="grow" type="text" name="note" placeholder="Замечание к ответу">
+    <input class="grow" type="text" name="remark" placeholder="Замечание к ответу">
     <button class="btn" name="action" value="confirm">Подтвердить</button>
     <button class="btn danger" name="action" value="reject">Отклонить</button>
   </div>

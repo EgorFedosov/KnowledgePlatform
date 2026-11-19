@@ -9,15 +9,15 @@
   </div>
   <div class="tagpick" style="margin: 8px 0 14px">
     <span class="muted">Теги:</span>
-    {% for tag in all_tags %}
-    <label style="display: inline"><input type="checkbox" name="tag" value="{{ tag.name }}" {{ 'checked' if tag.name in tags }}
-      onchange="this.form.submit()"><span class="chip">{{ tag.name }}</span></label>
+    {% for tag in allTags %}
+    <label style="display: inline"><input type="checkbox" name="tag" value="{{ tag }}" {{ 'checked' if tag in tags }}
+      onchange="this.form.submit()"><span class="chip">{{ tag }}</span></label>
     {% endfor %}
   </div>
 </form>
 <p class="muted">Найдено: {{ questions|length }}</p>
 {% for q in questions %}{{ question_card(q) }}{% endfor %}
-{% if g.user.role != 'Администратор' %}
+{% if roleName(g.user) != 'Администратор' %}
 <div class="card row">
   <span class="grow">Не нашли решение?</span>
   <a class="btn ghost" href="{{ url_for('new_question') }}">Задать свой вопрос</a>

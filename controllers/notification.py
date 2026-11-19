@@ -1,6 +1,6 @@
 from flask import g, render_template
 
-from controllers import login_required
+from controllers import loginRequired
 from models.content import Comment, Question
 from models.notification import Notification
 from models.reputation import Rating
@@ -8,27 +8,27 @@ from services.notification import NotificationService
 
 
 class NotificationController:
-    def __init__(self, notification_service: NotificationService):
-        self.notification_service = notification_service
+    def __init__(self, notificationService: NotificationService):
+        self.notificationService = notificationService
 
-    def notify_subscribers(self, question: Question) -> None:
-        self.notification_service.notify_subscribers(question)
+    def notifySubscribers(self, question: Question) -> None:
+        self.notificationService.notifySubscribers(question)
 
-    def notify_author(self, comment: Comment) -> None:
-        self.notification_service.notify_author(comment)
+    def notifyAuthor(self, comment: Comment) -> None:
+        self.notificationService.notifyAuthor(comment)
 
-    def notify_points(self, user_id: int, rating: Rating) -> None:
-        self.notification_service.notify_points(user_id, rating)
+    def notifyPoints(self, userId: int, rating: Rating) -> None:
+        self.notificationService.notifyPoints(userId, rating)
 
-    def get_notifications(self, user_id: int) -> list[Notification]:
-        return self.notification_service.get_notifications(user_id)
+    def getNotifications(self, userId: int) -> list[Notification]:
+        return self.notificationService.getNotifications(userId)
 
-    def bind(self, app):
-        app.add_url_rule("/notifications", "notifications", login_required(self.notifications_window))
+    def bindRoutes(self, app):
+        app.add_url_rule("/notifications", "notifications", loginRequired(self.notificationsWindow))
         app.context_processor(self.badge)
 
-    def notifications_window(self):
-        return render_template("notifications.html", notifications=self.get_notifications(g.user.id))
+    def notificationsWindow(self):
+        return render_template("notifications.html", notifications=self.getNotifications(g.user.id))
 
     def badge(self):
-        return {"notification_count": len(self.get_notifications(g.user.id)) if g.get("user") else 0}
+        return {"notificationCount": len(self.getNotifications(g.user.id)) if g.get("user") else 0}

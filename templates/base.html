@@ -11,11 +11,11 @@
   <a class="brand" href="{{ url_for('feed') }}">Платформа знаний</a>
   {% if g.user %}
   <nav class="nav">
-    {% if g.user.role == 'Эксперт' %}<a href="{{ url_for('review') }}" class="{{ 'on' if ep in ('review', 'moderation') }}">Проверка</a>{% endif %}
-    {% if g.user.role == 'Администратор' %}<a href="{{ url_for('admin') }}" class="{{ 'on' if ep == 'admin' }}">Администрирование</a>{% endif %}
+    {% if roleName(g.user) == 'Эксперт' %}<a href="{{ url_for('review') }}" class="{{ 'on' if ep in ('review', 'moderation') }}">Проверка</a>{% endif %}
+    {% if roleName(g.user) == 'Администратор' %}<a href="{{ url_for('admin') }}" class="{{ 'on' if ep == 'admin' }}">Администрирование</a>{% endif %}
     <a href="{{ url_for('feed') }}" class="{{ 'on' if ep in ('feed', 'search') }}">Лента</a>
-    {% if g.user.role != 'Администратор' %}<a href="{{ url_for('new_question') }}" class="{{ 'on' if ep == 'new_question' }}">Задать вопрос</a>{% endif %}
-    <a href="{{ url_for('notifications') }}" class="{{ 'on' if ep == 'notifications' }}">Уведомления{% if notification_count %} <span class="count">{{ notification_count }}</span>{% endif %}</a>
+    {% if roleName(g.user) != 'Администратор' %}<a href="{{ url_for('new_question') }}" class="{{ 'on' if ep == 'new_question' }}">Задать вопрос</a>{% endif %}
+    <a href="{{ url_for('notifications') }}" class="{{ 'on' if ep == 'notifications' }}">Уведомления{% if notificationCount %} <span class="count">{{ notificationCount }}</span>{% endif %}</a>
     <a href="{{ url_for('profile') }}" class="{{ 'on' if ep == 'profile' }}">Профиль</a>
     <a href="{{ url_for('logout') }}">Выход</a>
   </nav>

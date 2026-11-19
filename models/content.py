@@ -2,8 +2,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
 
-from models.profile import User
-from models.reputation import Rating, USEFUL_POINTS
+from models.profile import Expert, Specialist
+from models.reputation import Rating
 
 
 class QuestionStatus(StrEnum):
@@ -28,17 +28,14 @@ class Tag:
 class Comment:
     id: int | None
     text: str
-    question_id: int
-    author: User
-    created_at: datetime = field(default_factory=datetime.now)
-    is_best_answer: bool = False
-    review_status: ReviewStatus = ReviewStatus.NOT_REVIEWED
-    review_note: str = ""
+    createdAt: datetime = field(default_factory=datetime.now)
+    isBestAnswer: bool = False
+    reviewStatus: str = ReviewStatus.NOT_REVIEWED
+    author: Specialist | None = None
+    reviewer: Expert | None = None
     ratings: list[Rating] = field(default_factory=list)
-
-    @property
-    def useful_count(self) -> int:
-        return sum(1 for r in self.ratings if r.value == USEFUL_POINTS)
+    questionId: int | None = None
+    remark: str = ""
 
 
 @dataclass
@@ -46,8 +43,9 @@ class Question:
     id: int | None
     title: str
     description: str
-    author: User
-    created_at: datetime = field(default_factory=datetime.now)
-    status: QuestionStatus = QuestionStatus.OPEN
+    createdAt: datetime = field(default_factory=datetime.now)
+    author: Specialist | None = None
     tags: list[Tag] = field(default_factory=list)
     comments: list[Comment] = field(default_factory=list)
+    subscribers: list[Specialist] = field(default_factory=list)
+    status: str = QuestionStatus.OPEN

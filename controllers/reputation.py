@@ -1,25 +1,25 @@
 from flask import g
 
-from controllers import attempt, back, login_required
+from controllers import attempt, back, loginRequired
 from models.reputation import USEFUL_POINTS, Rating
 from services.reputation import ReputationService
 
 
 class ReputationController:
-    def __init__(self, reputation_service: ReputationService):
-        self.reputation_service = reputation_service
+    def __init__(self, reputationService: ReputationService):
+        self.reputationService = reputationService
 
-    def rate_comment(self, rating: Rating) -> Rating:
-        return self.reputation_service.rate_comment(rating)
+    def rateComment(self, rating: Rating) -> Rating:
+        return self.reputationService.rateComment(rating)
 
-    def add_points(self, comment_id: int) -> Rating:
-        return self.reputation_service.add_points(comment_id)
+    def addPoints(self, commentId: int) -> Rating:
+        return self.reputationService.addPoints(commentId)
 
-    def assign_status(self, user_id: int) -> str:
-        return self.reputation_service.assign_status(user_id)
+    def assignStatus(self, userId: int) -> str:
+        return self.reputationService.assignStatus(userId)
 
-    def bind(self, app):
-        app.add_url_rule("/comments/<int:id>/rate", "rate", login_required(self.rate_action), methods=["POST"])
+    def bindRoutes(self, app):
+        app.add_url_rule("/comments/<int:id>/rate", "rate", loginRequired(self.rateAction), methods=["POST"])
 
-    def rate_action(self, id: int):
-        return attempt(lambda: self.rate_comment(Rating(None, USEFUL_POINTS, id, g.user.id)), back())
+    def rateAction(self, id: int):
+        return attempt(lambda: self.rateComment(Rating(None, USEFUL_POINTS, g.user, id)), back())

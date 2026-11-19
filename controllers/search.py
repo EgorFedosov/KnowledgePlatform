@@ -1,38 +1,39 @@
 from flask import g, render_template, request
 
-from controllers import login_required
-from models.content import Question
+from controllers import loginRequired
+from models.content import Question, Tag
 from services.search import SearchService
 
 PAGE_SIZE = 5
 
 
 class SearchController:
-    def __init__(self, search_service: SearchService):
-        self.search_service = search_service
+    def __init__(self, searchService: SearchService):
+        self.searchService = searchService
 
-    def search(self, keywords: str, tags: list[str]) -> list[Question]:
-        return self.search_service.search(keywords, tags)
+    def search(self, keywords: str, tags: list[Tag]) -> list[Question]:
+        return self.searchService.search(keywords, tags)
 
-    def get_feed(self, user_id: int) -> list[Question]:
-        return self.search_service.get_feed(user_id)
+    def getFeed(self, userId: int) -> list[Question]:
+        return self.searchService.getFeed(userId)
 
-    def index_question(self, question: Question) -> None:
-        self.search_service.index_question(question)
+    def indexQuestion(self, question: Question) -> None:
+        self.searchService.indexQuestion(question)
 
-    def bind(self, app):
-        app.add_url_rule("/feed", "feed", login_required(self.feed_window))
-        app.add_url_rule("/search", "search", login_required(self.search_window))
+    def bindRoutes(self, app):
+        app.add_url_rule("/feed", "feed", loginRequired(self.feedWindow))
+        app.add_url_rule("/search", "search", loginRequired(self.searchWindow))
 
-    def feed_window(self):
-        questions = self.get_feed(g.user.id)
+    def feedWindow(self):
+        questions = self.getFeed(g.user.id)
         pages = max(1, (len(questions) + PAGE_SIZE - 1) // PAGE_SIZE)
         page = min(max(1, request.args.get("page", 1, type=int)), pages)
         shown = questions[(page - 1) * PAGE_SIZE:page * PAGE_SIZE]
         return render_template("feed.html", questions=shown, page=page, pages=pages)
 
-    def search_window(self):
+    def searchWindow(self):
         keywords = request.args.get("q", "")
-        tags = request.args.getlist("tag")
-        return render_template("search.html", questions=self.search(keywords, tags), keywords=keywords,
-                               tags=tags, all_tags=self.search_service.get_tags())
+        chosen = request.args.getlist("tag")
+        allTags = sorted({t.name for q in self.getFeed(g.user.id) for t in q.tags})
+        questions = self.search(keywords, [Tag(None, name) for name in chosen])
+        return render_template("search.html", questions=questions, keywords=keywords, tags=chosen, allTags=allTags)

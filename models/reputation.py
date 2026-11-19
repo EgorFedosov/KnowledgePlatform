@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from models.profile import Specialist
+
 USEFUL_POINTS = 1
 BEST_ANSWER_POINTS = 10
 
@@ -8,5 +10,5 @@ BEST_ANSWER_POINTS = 10
 class Rating:
     id: int | None
     value: int
-    comment_id: int
-    author_id: int
+    author: Specialist | None = None
+    commentId: int | None = None

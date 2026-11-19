@@ -2,10 +2,11 @@ from functools import wraps
 
 from flask import flash, g, redirect, request, url_for
 
+from models.content import Tag
 from services import ServiceError
 
 
-def login_required(view):
+def loginRequired(view):
     @wraps(view)
     def wrapper(*args, **kwargs):
         if g.user is None:
@@ -14,15 +15,15 @@ def login_required(view):
     return wrapper
 
 
-def attempt(action, success_url: str, fail_url: str | None = None, message: str = ""):
+def attempt(action, successUrl: str, message: str = ""):
     try:
         action()
     except ServiceError as error:
         flash(str(error), "error")
-        return redirect(fail_url or success_url)
+        return redirect(successUrl)
     if message:
         flash(message, "ok")
-    return redirect(success_url)
+    return redirect(successUrl)
 
 
 def selected(field: str) -> int:
@@ -34,3 +35,7 @@ def selected(field: str) -> int:
 
 def back() -> str:
     return request.referrer or url_for("feed")
+
+
+def parseTags(text: str) -> list[Tag]:
+    return [Tag(None, name) for name in text.replace(";", ",").split(",")]

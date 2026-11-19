@@ -10,7 +10,7 @@
     {% set names = q.tags|map(attribute='name')|join(', ') %}
     <tr class="pick" data-tags="{{ names }}"
         onclick="this.querySelector('input').checked = true; document.querySelector('[name=tags]').value = this.dataset.tags">
-      <td><input type="radio" name="question_id" value="{{ q.id }}">
+      <td><input type="radio" name="questionId" value="{{ q.id }}">
         <a href="{{ url_for('question', id=q.id) }}">{{ q.title }}</a></td>
       <td>{{ names }}</td>
       <td>{{ status_badge(q.status) }}</td>

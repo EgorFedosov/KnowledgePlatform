@@ -1,147 +1,126 @@
 from abc import ABC, abstractmethod
 
-from models.content import Comment, Question, QuestionStatus, ReviewStatus
-from models.profile import Expert, Specialist, User
-from services import ServiceError, require
+from models.content import Comment, Question, QuestionStatus, ReviewStatus, Tag
+from models.profile import Expert, Specialist
+from services import currentUser, require, requireRole
 from services.notification import NotificationService
 from services.reputation import ReputationService
 from services.search import SearchService
 from storage import Database
 
+EXPERT_ONLY = "Действие доступно только эксперту"
+
 
 class ContentService(ABC):
     @abstractmethod
-    def create_question(self, question: Question, tags: list[str]) -> Question: ...
+    def createQuestion(self, question: Question, tags: list[Tag]) -> Question: ...
 
     @abstractmethod
-    def create_comment(self, comment: Comment) -> Comment: ...
+    def createComment(self, comment: Comment) -> Comment: ...
 
     @abstractmethod
-    def mark_best_answer(self, comment_id: int, actor: User) -> Comment: ...
+    def markBestAnswer(self, commentId: int) -> Comment: ...
 
     @abstractmethod
-    def review_comment(self, comment_id: int, status: ReviewStatus, actor: User, note: str = "") -> Comment: ...
+    def reviewComment(self, commentId: int, status: str, remark: str = "") -> Comment: ...
 
     @abstractmethod
-    def subscribe(self, user_id: int, question_id: int) -> None: ...
+    def subscribe(self, userId: int, questionId: int) -> None: ...
 
     @abstractmethod
-    def close_question(self, question_id: int, actor: User) -> Question: ...
+    def closeQuestion(self, questionId: int) -> Question: ...
 
     @abstractmethod
-    def edit_tags(self, question_id: int, tags: list[str], actor: User) -> Question: ...
+    def updateTags(self, questionId: int, tags: list[Tag]) -> Question: ...
 
     @abstractmethod
-    def get_question(self, question_id: int) -> Question: ...
+    def getQuestion(self, questionId: int) -> Question: ...
 
     @abstractmethod
-    def is_subscribed(self, user_id: int, question_id: int) -> bool: ...
-
-    @abstractmethod
-    def get_unreviewed_comments(self, actor: User) -> list[Comment]: ...
-
-    @abstractmethod
-    def get_active_questions(self, actor: User) -> list[Question]: ...
+    def getQuestions(self) -> list[Question]: ...
 
 
 class ContentServiceImpl(ContentService):
-    def __init__(self, db: Database, search_service: SearchService,
-                 notification_service: NotificationService, reputation_service: ReputationService):
-        self.db = db
-        self.search_service = search_service
-        self.notification_service = notification_service
-        self.reputation_service = reputation_service
+    def __init__(self, database: Database, searchService: SearchService,
+                 notificationService: NotificationService, reputationService: ReputationService):
+        self.database = database
+        self.searchService = searchService
+        self.notificationService = notificationService
+        self.reputationService = reputationService
 
-    def create_question(self, question: Question, tags: list[str]) -> Question:
-        self._require_specialist(question.author)
+    def createQuestion(self, question: Question, tags: list[Tag]) -> Question:
+        require(isinstance(question.author, Specialist), "Задавать вопросы могут только специалисты")
         question.title, question.description = question.title.strip(), question.description.strip()
         require(bool(question.title and question.description), "Укажите заголовок и описание")
-        tags = self._clean_tags(tags)
-        question = self.db.save_question(question, tags)
-        self.search_service.index_question(question)
-        self.notification_service.notify_subscribers(question)
+        question.tags = self._cleanTags(tags)
+        question = self.database.save(question)
+        self.searchService.indexQuestion(question)
+        self.notificationService.notifySubscribers(question)
         return question
 
-    def create_comment(self, comment: Comment) -> Comment:
-        self._require_specialist(comment.author)
-        question = self.get_question(comment.question_id)
+    def createComment(self, comment: Comment) -> Comment:
+        require(isinstance(comment.author, Specialist), "Отвечать могут только специалисты")
+        question = self.getQuestion(comment.questionId)
         require(question.status != QuestionStatus.CLOSED, "Тема закрыта, оставлять ответы нельзя")
         comment.text = comment.text.strip()
         require(bool(comment.text), "Ответ не может быть пустым")
-        comment = self.db.save_comment(comment)
-        self.notification_service.notify_author(comment)
+        comment = self.database.save(comment)
+        self.notificationService.notifyAuthor(comment)
         return comment
 
-    def mark_best_answer(self, comment_id: int, actor: User) -> Comment:
-        comment = self._comment(comment_id)
-        question = self.get_question(comment.question_id)
-        require(question.author.id == actor.id, "Выбрать лучший ответ может только автор вопроса")
+    def markBestAnswer(self, commentId: int) -> Comment:
+        comment = self._comment(commentId)
+        question = self.getQuestion(comment.questionId)
+        user = currentUser()
+        require(user is not None and question.author.id == user.id, "Выбрать лучший ответ может только автор вопроса")
         require(question.status != QuestionStatus.SOLVED, "Лучший ответ уже выбран")
         require(question.status == QuestionStatus.OPEN, "Тема закрыта")
-        require(comment.author.id != actor.id, "Нельзя выбрать лучшим свой ответ")
-        comment = self.db.update_best_answer(comment_id)
-        self.db.update_question_status(question.id, QuestionStatus.SOLVED)
-        self.reputation_service.add_points(comment_id)
+        require(comment.author.id != user.id, "Нельзя выбрать лучшим свой ответ")
+        comment = self.database.updateBestAnswer(commentId)
+        self.database.updateQuestionStatus(question.id, QuestionStatus.SOLVED)
+        self.reputationService.addPoints(commentId)
         return comment
 
-    def review_comment(self, comment_id: int, status: ReviewStatus, actor: User, note: str = "") -> Comment:
-        self._require_expert(actor)
-        comment = self._comment(comment_id)
-        require(comment.review_status == ReviewStatus.NOT_REVIEWED, "Ответ уже проверен")
-        require(status != ReviewStatus.NOT_REVIEWED, "Недопустимый статус проверки")
-        return self.db.update_review(comment_id, status, note.strip())
+    def reviewComment(self, commentId: int, status: str, remark: str = "") -> Comment:
+        requireRole(Expert, EXPERT_ONLY)
+        comment = self._comment(commentId)
+        require(comment.reviewStatus == ReviewStatus.NOT_REVIEWED, "Ответ уже проверен")
+        require(status in (ReviewStatus.CONFIRMED, ReviewStatus.REJECTED), "Недопустимый статус проверки")
+        comment.reviewStatus, comment.reviewer, comment.remark = status, currentUser(), remark.strip()
+        return self.database.updateReview(comment)
 
-    def subscribe(self, user_id: int, question_id: int) -> None:
-        self._require_specialist(self.db.find_user(user_id))
-        self.get_question(question_id)
-        self.db.save_subscription(user_id, question_id)
+    def subscribe(self, userId: int, questionId: int) -> None:
+        require(isinstance(self.database.findUser(userId), Specialist), "Подписываться могут только специалисты")
+        self.getQuestion(questionId)
+        self.database.saveSubscription(userId, questionId)
 
-    def close_question(self, question_id: int, actor: User) -> Question:
-        self._require_expert(actor)
-        require(self.get_question(question_id).status != QuestionStatus.CLOSED, "Тема уже закрыта")
-        self.db.update_question_status(question_id, QuestionStatus.CLOSED)
-        return self.get_question(question_id)
+    def closeQuestion(self, questionId: int) -> Question:
+        requireRole(Expert, EXPERT_ONLY)
+        require(self.getQuestion(questionId).status != QuestionStatus.CLOSED, "Тема уже закрыта")
+        return self.database.updateQuestionStatus(questionId, QuestionStatus.CLOSED)
 
-    def edit_tags(self, question_id: int, tags: list[str], actor: User) -> Question:
-        self._require_expert(actor)
-        require(self.get_question(question_id).status != QuestionStatus.CLOSED, "Тема закрыта")
-        question = self.db.update_tags(question_id, self._clean_tags(tags))
-        self.search_service.index_question(question)
+    def updateTags(self, questionId: int, tags: list[Tag]) -> Question:
+        requireRole(Expert, EXPERT_ONLY)
+        require(self.getQuestion(questionId).status != QuestionStatus.CLOSED, "Тема закрыта")
+        question = self.database.updateTags(questionId, self._cleanTags(tags))
+        self.searchService.indexQuestion(question)
         return question
 
-    def get_question(self, question_id: int) -> Question:
-        question = self.db.find_question(question_id)
+    def getQuestion(self, questionId: int) -> Question:
+        question = self.database.findQuestion(questionId)
         require(question is not None, "Вопрос не найден")
         return question
 
-    def is_subscribed(self, user_id: int, question_id: int) -> bool:
-        return self.db.is_subscribed(user_id, question_id)
+    def getQuestions(self) -> list[Question]:
+        return self.database.findQuestions()
 
-    def get_unreviewed_comments(self, actor: User) -> list[Comment]:
-        self._require_expert(actor)
-        return self.db.find_comments_by_status(ReviewStatus.NOT_REVIEWED)
-
-    def get_active_questions(self, actor: User) -> list[Question]:
-        self._require_expert(actor)
-        return self.db.find_questions_by_status(QuestionStatus.OPEN, QuestionStatus.SOLVED)
-
-    def _comment(self, comment_id: int) -> Comment:
-        comment = self.db.find_comment(comment_id)
+    def _comment(self, commentId: int) -> Comment:
+        comment = self.database.findComment(commentId)
         require(comment is not None, "Ответ не найден")
         return comment
 
     @staticmethod
-    def _clean_tags(tags: list[str]) -> list[str]:
-        tags = list(dict.fromkeys(t.strip().lower() for t in tags if t.strip()))
-        require(bool(tags), "Укажите хотя бы один тег")
-        return tags
-
-    @staticmethod
-    def _require_specialist(user: User | None):
-        if not isinstance(user, Specialist):
-            raise ServiceError("Действие доступно только специалистам")
-
-    @staticmethod
-    def _require_expert(user: User):
-        if not isinstance(user, Expert):
-            raise ServiceError("Действие доступно только эксперту")
+    def _cleanTags(tags: list[Tag]) -> list[Tag]:
+        names = list(dict.fromkeys(t.name.strip().lower() for t in tags if t.name.strip()))
+        require(bool(names), "Укажите хотя бы один тег")
+        return [Tag(None, name) for name in names]
