@@ -9,6 +9,8 @@ from models.notification import Notification
 from models.profile import User, roleName, userOfRole
 from models.reputation import Rating
 
+SCHEMA_VERSION = 2
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY, name TEXT UNIQUE NOT NULL, password TEXT NOT NULL, role TEXT NOT NULL,
@@ -45,8 +47,17 @@ class Database:
     def __init__(self, path: str):
         self.conn = sqlite3.connect(path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
+        if self._one("PRAGMA user_version")[0] != SCHEMA_VERSION:
+            self._dropTables()
         self.conn.execute("PRAGMA foreign_keys = ON")
         self.conn.executescript(SCHEMA)
+        self.conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+
+    def _dropTables(self):
+        tables = self._all("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")
+        for table in tables:
+            self.conn.execute(f"DROP TABLE {table['name']}")
+        self.conn.commit()
 
     def _all(self, sql, *args):
         return self.conn.execute(sql, args).fetchall()
